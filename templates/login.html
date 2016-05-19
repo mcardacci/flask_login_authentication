@@ -1,11 +1,22 @@
+
+<link rel="stylesheet" type="text/css" href="/static/style.css">
 {% block body %}
 {% if session['logged_in'] %}
 	<p>You're logged in already!</p>
 {% else %}
 <form action="/login" method="POST">
-	<input type="username" name="username" placeholder="Username">
-	<input type="password" name="password" placeholder="Password">
-	<input type="submit" value="Log In">
+	<div class="login-screen">
+		<div class="app-title">
+			<h1>Login</h1>
+		</div>
+		<div class="login-form">
+			<div class="control-group">
+<!---START HERE https://pythonspot.com/en/login-authentication-with-flask/ -->			
+ <input type="username" name="username" placeholder="Username">
+			<input type="password" name="password" placeholder="Password">
+			<input type="submit" value="Log In">
+		</div>
+	</div>
 </form>
 {% endif %}
 {% endblock %}

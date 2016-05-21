@@ -1,8 +1,8 @@
-from flask import Flask
 from flask import Flask, flash, redirect, render_template, request, session, abort
-import os
+from passlib.hash import sha256_crypt
 from sqlalchemy.orm import sessionmaker
 from tabledef import *
+import os
 
 engine=create_engine("sqlite:///flask.db", echo=True)
 
@@ -30,24 +30,28 @@ def do_admin_login():
 		flash('wrong password')
 	return home()
 
+@app.route('/signup', methods=['GET'])
+def signup():
+	return render_template('/signup.html')
+
 @app.route("/logout")
 def logout():
 	session['logged_in']=False
 	return home()
 
-@app.route("/test")
-def test():
-	POST_USERNAME="charlie"
-	POST_PASSWORD="mingus"
+# @app.route("/test")
+# def test():
+# 	POST_USERNAME="charlie"
+# 	POST_PASSWORD="mingus"
 
-	Session=sessionmaker(bind=engine)
-	s=Session()
-	query=s.query(User).filter(User.username.in_([POST_USERNAME]),User.password.in_([POST_PASSWORD]) )
-	result=query.first()
-	if result:
-		return "Object Found"
-	else:
-		return "Object not found " + POST_USERNAME + " " + POST_PASSWORD
+# 	Session=sessionmaker(bind=engine)
+# 	s=Session()
+# 	query=s.query(User).filter(User.username.in_([POST_USERNAME]),User.password.in_([POST_PASSWORD]) )
+# 	result=query.first()
+# 	if result:
+# 		return "Object Found"
+# 	else:
+# 		return "Object not found " + POST_USERNAME + " " + POST_PASSWORD
 
 if __name__ == "__main__":
     app.secret_key = os.urandom(12)

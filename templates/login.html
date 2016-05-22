@@ -1,9 +1,15 @@
 
 <link rel="stylesheet" type="text/css" href="/static/style.css">
+{% with messages = get_flashed_messages() %}
+  {% if messages %}
+    <ul class=flashes>
+    {% for message in messages %}
+      <li>{{ message }}</li>
+    {% endfor %}
+    </ul>
+  {% endif %}
+{% endwith %}
 {% block body %}
-{% if session['logged_in'] %}
-	<p>You're logged in already!</p>
-{% else %}
 <form action="/login" method="POST">
 	<div class="login-screen">
 		<div class="app-title">
@@ -25,5 +31,4 @@
 		</div>
 	</div>
 </form>
-{% endif %}
 {% endblock %}

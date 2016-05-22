@@ -1,4 +1,4 @@
-from flask import Flask, flash, redirect, render_template, request, session, abort
+from flask import Flask, flash, redirect, render_template, request, session, abort, url_for
 from passlib.hash import sha256_crypt
 from sqlalchemy.orm import sessionmaker
 from tabledef import *
@@ -16,7 +16,7 @@ def home():
 		return "Welcome Back! <a href='/logout'>Log Out</a>"
 
 @app.route('/login', methods=['POST'])
-def do_admin_login():
+def login():
 	POST_USERNAME=str(request.form['username'])
 	POST_PASSWORD=str(request.form['password'])
 
@@ -27,7 +27,7 @@ def do_admin_login():
 	if result:
 		session['logged_in']=True
 	else:
-		flash('wrong password')
+		flash('wrong username or password')
 	return home()
 
 @app.route('/signup', methods=['GET'])

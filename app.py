@@ -1,22 +1,23 @@
-from flask import Flask
-from flask import Flask, flash, redirect, render_template, request, session, abort
-import os
+from flask import Flask, flash, redirect, render_template, request, session, abort, url_for
+from passlib.hash import sha256_crypt
 from sqlalchemy.orm import sessionmaker
+from sqlalchemy.sql import exists
 from tabledef import *
+import os
 
 engine=create_engine("sqlite:///flask.db", echo=True)
 
 app = Flask(__name__)
- 
+
 @app.route("/")
 def home():
 	if not session.get('logged_in'):
 		return render_template('login.html')
 	else:
-		return "Welcome Back! <a href='/logout'>Log Out</a>"
+		return redirect(url_for('profile_page', user_id=session['user_id']))
 
 @app.route('/login', methods=['POST'])
-def do_admin_login():
+def login():
 	POST_USERNAME=str(request.form['username'])
 	POST_PASSWORD=str(request.form['password'])
 
@@ -24,30 +25,82 @@ def do_admin_login():
 	s=Session()
 	query=s.query(User).filter(User.username.in_([POST_USERNAME]), User.password.in_([POST_PASSWORD]))
 	result=query.first()
+	# This is how to print a dict of an SQLAlchemy object
+	# print result.__dict__
+	# print result as a test and pass the id through url. here!
 	if result:
 		session['logged_in']=True
+		session['user_id']=result.id
+		session['username']=result.username
 	else:
-		flash('wrong password')
-	return home()
+		flash('wrong username or password')
+	return redirect(url_for('home'))
+
+
+@app.route('/signup', methods=['GET'])
+def signup():
+	if session.get('logged_in'):
+		flash('Please log out before signing up a new user.')
+		return redirect(url_for('home'))
+	else:
+		return render_template('/signup.html')
+
+@app.route('/signup', methods=['POST'])
+def create_user():
+	form_username=str(request.form['username'])
+	form_password=str(request.form['password'])
+	session=sessionmaker(bind=engine)()
+
+	if session.query(exists().where(User.username == form_username)).scalar():
+		flash("That Username Has Already Been Chosen")
+		return redirect(url_for('create_user'))
+	elif not len(form_username) > 3 and not len(form_password) > 3:
+		flash("Username and password must be more than 3 characters")
+		return redirect(url_for('create_user'))
+	else:
+		encrypted_pass=sha256_crypt.encrypt(form_password)
+		current_user=User(form_username, encrypted_pass)
+		session.add(current_user)
+		session.commit()
+		session['logged_in']=True
+		session['username']=form_username
+#------------START HERE-----------------------------------------
+#---------------find out how to retrieve the current user------------
+		session['user_id']=current_user.id
+		# return redirect(url_for('home'))
+
+@app.route("/profile/<int:user_id>", methods=['GET'])
+def profile_page(user_id):
+	user=session["username"]
+	return "Welcome Back "+user+" <a href='/logout'>Log Out</a>"
 
 @app.route("/logout")
 def logout():
 	session['logged_in']=False
-	return home()
+	return redirect(url_for('home'))
 
-@app.route("/test")
-def test():
-	POST_USERNAME="charlie"
-	POST_PASSWORD="mingus"
 
-	Session=sessionmaker(bind=engine)
-	s=Session()
-	query=s.query(User).filter(User.username.in_([POST_USERNAME]),User.password.in_([POST_PASSWORD]) )
-	result=query.first()
-	if result:
-		return "Object Found"
-	else:
-		return "Object not found " + POST_USERNAME + " " + POST_PASSWORD
+
+#-------------------TESTING-------------------------------------
+# How to write URL Params
+@app.route('/post/<int:post_id>')
+def show_post(post_id):
+    # show the post with the given id, the id is an integer
+    return 'Post %d' % post_id
+
+# @app.route("/test")
+# def test():
+# 	POST_USERNAME="charlie"
+# 	POST_PASSWORD="mingus"
+
+# 	Session=sessionmaker(bind=engine)
+# 	s=Session()
+# 	query=s.query(User).filter(User.username.in_([POST_USERNAME]),User.password.in_([POST_PASSWORD]) )
+# 	result=query.first()
+# 	if result:
+# 		return "Object Found"
+# 	else:
+# 		return "Object not found " + POST_USERNAME + " " + POST_PASSWORD
 
 if __name__ == "__main__":
     app.secret_key = os.urandom(12)

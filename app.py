@@ -1,6 +1,7 @@
 from flask import Flask, flash, redirect, render_template, request, session, abort, url_for
 from passlib.hash import sha256_crypt
 from sqlalchemy.orm import sessionmaker
+from sqlalchemy.sql import exists
 from tabledef import *
 import os
 
@@ -8,15 +9,12 @@ engine=create_engine("sqlite:///flask.db", echo=True)
 
 app = Flask(__name__)
 
- 
 @app.route("/")
 def home():
 	if not session.get('logged_in'):
 		return render_template('login.html')
 	else:
-		print session
-		print session['user_id']
-		return redirect(url_for('user_profile_page', user_id=session['user_id']))
+		return redirect(url_for('profile_page', user_id=session['user_id']))
 
 @app.route('/login', methods=['POST'])
 def login():
@@ -31,11 +29,9 @@ def login():
 	# print result.__dict__
 	# print result as a test and pass the id through url. here!
 	if result:
-		user_id=result.id
-		username=result.username
 		session['logged_in']=True
-		session['user_id']=user_id
-		session['username']=username
+		session['user_id']=result.id
+		session['username']=result.username
 	else:
 		flash('wrong username or password')
 	return redirect(url_for('home'))
@@ -49,12 +45,32 @@ def signup():
 	else:
 		return render_template('/signup.html')
 
-@app.route("/profile", methods=['GET'])
-def profile_page():
-	return "Welcome Back! <a href='/logout'>Log Out</a>"	
+@app.route('/signup', methods=['POST'])
+def create_user():
+	form_username=str(request.form['username'])
+	form_password=str(request.form['password'])
+	session=sessionmaker(bind=engine)()
+
+	if session.query(exists().where(User.username == form_username)).scalar():
+		flash("That Username Has Already Been Chosen")
+		return redirect(url_for('create_user'))
+	elif not len(form_username) > 3 and not len(form_password) > 3:
+		flash("Username and password must be more than 3 characters")
+		return redirect(url_for('create_user'))
+	else:
+		encrypted_pass=sha256_crypt.encrypt(form_password)
+		current_user=User(form_username, encrypted_pass)
+		session.add(current_user)
+		session.commit()
+		session['logged_in']=True
+		session['username']=form_username
+#------------START HERE-----------------------------------------
+#---------------find out how to retrieve the current user------------
+		session['user_id']=current_user.id
+		# return redirect(url_for('home'))
 
 @app.route("/profile/<int:user_id>", methods=['GET'])
-def user_profile_page(user_id):
+def profile_page(user_id):
 	user=session["username"]
 	return "Welcome Back "+user+" <a href='/logout'>Log Out</a>"
 

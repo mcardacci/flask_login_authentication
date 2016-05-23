@@ -1,5 +1,14 @@
 
 <link rel="stylesheet" type="text/css" href="/static/style.css">
+{% with messages = get_flashed_messages() %}
+  {% if messages %}
+    <ul class=flashes>
+    {% for message in messages %}
+      <li>{{ message }}</li>
+    {% endfor %}
+    </ul>
+  {% endif %}
+{% endwith %}
 {% block body %}
 <form action="/signup" method="POST">
 	<div class="login-screen">

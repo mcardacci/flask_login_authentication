@@ -1,4 +1,5 @@
 import datetime
+from passlib.hash import sha256_crypt
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from tabledef import *
@@ -9,14 +10,12 @@ engine=create_engine('sqlite:///flask.db', echo=True)
 Session=sessionmaker(bind=engine)
 session=Session()
 
-user=User("admin", "password")
-session.add(user)
+users={"admin": "password", "charlie": "mingus", "lucile": "asdf"}
 
-user=User("charlie", "mingus")
-session.add(user)
-
-user=User("lucile", "asdf")
-session.add(user)
+for user, password in users.items():	
+	encrypted_pass=sha256_crypt.encrypt(password)
+	current_user=User(user, encrypted_pass)
+	session.add(current_user)
 
 # Commit the record to the database
 session.commit()

@@ -27,7 +27,6 @@ def login():
 	result=query.first()
 	# This is how to print a dict of an SQLAlchemy object
 	# print result.__dict__
-	# print result as a test and pass the id through url. here!
 	if result:
 		session['logged_in']=True
 		session['user_id']=result.id
@@ -49,9 +48,9 @@ def signup():
 def create_user():
 	form_username=str(request.form['username'])
 	form_password=str(request.form['password'])
-	session=sessionmaker(bind=engine)()
+	sql=sessionmaker(bind=engine)()
 
-	if session.query(exists().where(User.username == form_username)).scalar():
+	if sql.query(exists().where(User.username == form_username)).scalar():
 		flash("That Username Has Already Been Chosen")
 		return redirect(url_for('create_user'))
 	elif not len(form_username) > 3 and not len(form_password) > 3:
@@ -60,14 +59,12 @@ def create_user():
 	else:
 		encrypted_pass=sha256_crypt.encrypt(form_password)
 		current_user=User(form_username, encrypted_pass)
-		session.add(current_user)
-		session.commit()
-		session['logged_in']=True
+		sql.add(current_user)
+		sql.commit()
 		session['username']=form_username
-#------------START HERE-----------------------------------------
-#---------------find out how to retrieve the current user------------
+		session['logged_in']=True
 		session['user_id']=current_user.id
-		# return redirect(url_for('home'))
+		return redirect(url_for('home'))
 
 @app.route("/profile/<int:user_id>", methods=['GET'])
 def profile_page(user_id):

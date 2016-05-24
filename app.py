@@ -18,12 +18,14 @@ def home():
 
 @app.route('/login', methods=['POST'])
 def login():
-	POST_USERNAME=str(request.form['username'])
-	POST_PASSWORD=str(request.form['password'])
+	form_username=str(request.form['username'])
+	form_password=str(request.form['password'])
 
 	Session=sessionmaker(bind=engine)
 	s=Session()
-	query=s.query(User).filter(User.username.in_([POST_USERNAME]), User.password.in_([POST_PASSWORD]))
+#------------- here is the way to verify, set up if statement here -----------------------------------------
+	# sha256_crypt.verify("password", hash)
+	query=s.query(User).filter(User.username.in_([form_username]), User.password.in_([form_password]))
 	result=query.first()
 	# This is how to print a dict of an SQLAlchemy object
 	# print result.__dict__

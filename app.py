@@ -23,13 +23,12 @@ def login():
 
 	Session=sessionmaker(bind=engine)
 	s=Session()
-#------------- here is the way to verify, set up if statement here -----------------------------------------
-	# sha256_crypt.verify("password", hash)
-	query=s.query(User).filter(User.username.in_([form_username]), User.password.in_([form_password]))
+
+	query=s.query(User).filter(User.username.in_([form_username])) 
 	result=query.first()
 	# This is how to print a dict of an SQLAlchemy object
-	# print result.__dict__
-	if result:
+	# print result.__dict__	
+	if result and sha256_crypt.verify(form_password, result.password): # returns boolean:
 		session['logged_in']=True
 		session['user_id']=result.id
 		session['username']=result.username

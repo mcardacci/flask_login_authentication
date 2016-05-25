@@ -69,8 +69,11 @@ def create_user():
 
 @app.route("/profile/<int:user_id>", methods=['GET'])
 def profile_page(user_id):
-	user=session["username"]
-	return "Welcome Back "+user+" <a href='/logout'>Log Out</a>"
+	if session.get('logged_in'):
+		user=session["username"]
+		return "Welcome Back "+user+" <a href='/logout'>Log Out</a>"
+	else:
+		return redirect(url_for('home'))
 
 @app.route("/logout")
 def logout():
